@@ -1,6 +1,6 @@
 # BeepBoop
 
-Drive a four-legged robot around the Moon, Mars, Earth, a space station and Funland, right in your phone's browser.
+Drive a four-legged robot around the Moon, Mars, Earth, a space station, Funland and the Zoo, right in your phone's browser.
 
 **Play:** https://bclumber.github.io/beepboop/
 
@@ -11,7 +11,7 @@ Drive a four-legged robot around the Moon, Mars, Earth, a space station and Funl
 It opens full-screen like a regular app and keeps working without internet after the first visit.
 
 ## What's in it
-- Five worlds with their own gravity and scenery: a moon base, a Mars colony, an Earth neighborhood, a space station, and Funland, a silly amusement park with trampolines, a roller coaster, a Ferris wheel and a carousel
+- Six worlds with their own gravity and scenery: a moon base, a Mars colony, an Earth neighborhood, a space station, Funland (trampolines, a roller coaster rail to grind, and a Ferris wheel and carousel to ride) and a Zoo with ten animals to say hi to
 - Easy one-stick controls (or classic two-stick), jump and jet-pack flying with fuel pads
 - Climbing onto crates, platforms, cars and the rover
 - Toddler learning mode: find floating tokens for colors, shapes, numbers and letters, read aloud in the most natural voice the phone has (tap **Voice** to try the others)
