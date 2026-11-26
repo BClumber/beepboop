@@ -48,6 +48,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05060a;color:var(--in
 body.easy .stick.r{display:none}
 body.easy .btns{bottom:calc(env(safe-area-inset-bottom) + 18px);right:calc(env(safe-area-inset-right) + 18px)}
 body.easy #bJet{grid-column:1 / span 2;justify-self:center;width:88px;height:88px;font-size:15px;order:9}
+body.toddler .stick.r,body.toddler #bDive,body.toddler #bSit,body.toddler #bSpd,body.toddler #bCam,body.toddler .read,body.toddler .status{display:none}
+body.toddler .stick.l{width:184px;height:184px}body.toddler .knob{width:84px;height:84px;margin:-42px 0 0 -42px}
+body.toddler .btns{grid-template-columns:1fr}body.toddler #bJet{width:124px;height:124px;font-size:21px;grid-column:auto;border-width:4px}
 @media(max-width:520px){.read{font-size:12px;gap:3px 8px;padding:5px 9px}.fuel{width:44px}.status{font-size:12px}.chip{min-height:38px;font-size:13px;padding:0 11px}
   .stick{width:128px;height:128px}.btns{grid-template-columns:repeat(2,52px)}.btn{width:52px;height:52px}body.easy #bJet{width:84px;height:84px}.card{padding:12px 18px 10px}}
 @media(max-height:460px){.stick{width:118px;height:118px}.btns{bottom:calc(env(safe-area-inset-bottom) + 18px);right:calc(env(safe-area-inset-right) + 150px)}.status{display:none}.chip{min-height:36px;font-size:13px;padding:0 10px}}
@@ -67,7 +70,7 @@ body.easy #bJet{grid-column:1 / span 2;justify-self:center;width:88px;height:88p
   <button class="btn" id="bCam">CAM</button>
 </div>
 <div class="card" id="card"><canvas id="cardCv" width="300" height="300"></canvas><div id="cardTxt"></div></div>
-<div class="hint" id="hint">Push the stick the way you want to go and the robot turns and walks there.<br>Drag the screen to look around, pinch to zoom.<br>Walk into a crate or ledge to climb onto it. Tap <b>JUMP</b> to jump, hold it to fly. Stand on a <b>FUEL</b> pad to refill.<br>Find the floating picture tokens to learn colors, shapes, numbers and letters.</div>
+<div class="hint" id="hint">Push the stick the way you want to go, or just tap the ground and the robot walks there.<br>Drag the screen to look around, pinch to zoom.<br>Walk into a crate or ledge to climb onto it. Tap <b>JUMP</b> to jump, hold it to fly. Stand on a <b>FUEL</b> pad to refill.<br>Find the floating tokens to learn colors, shapes, 3D shapes, numbers and letters.</div>
 <script src="three.min.js"></script>
 <script>
 {
@@ -816,7 +819,39 @@ const COLORS=[['Red','#e8322f'],['Orange','#ff8a1f'],['Yellow','#ffd21f'],['Gree
 const SHAPES=['Circle','Square','Triangle','Star','Heart','Rectangle','Oval','Diamond','Hexagon','Crescent'];
 const NUMW=['one','two','three','four','five','six','seven','eight','nine','ten'];
 const LETTERS={A:'Astronaut',B:'Ball',C:'Comet',D:'Dog',E:'Earth',F:'Fish',G:'Gold',H:'Hat',I:'Ice',J:'Jet',K:'Kite',L:'Lion',M:'Moon',N:'Nest',O:'Orbit',P:'Planet',Q:'Queen',R:'Robot',S:'Star',T:'Tree',U:'Umbrella',V:'Van',W:'Whale',X:'X-ray',Y:'Yo-yo',Z:'Zebra'};
-const TOPICS=['Off','Colors','Shapes','Numbers','Letters'];let topic='Colors';
+const TOPICS=['Off','Colors','Shapes','3D Shapes','Numbers','Letters'];
+const SHAPES3D=[['Sphere','#e8322f','A sphere is round like a ball.'],['Cube','#2f7df6','A cube has six square faces, like a block.'],
+  ['Cone','#ffb300','A cone has a point on top, like an ice cream cone.'],['Cylinder','#2fb84a','A cylinder is like a can.'],
+  ['Pyramid','#ff8a1f','A pyramid has triangle sides that meet at the top.'],['Torus','#ff6fb1','A torus is shaped like a donut.'],
+  ['Rectangular Prism','#8a4be0','A rectangular prism is shaped like a box or a brick.'],['Triangular Prism','#00a99d','A triangular prism is shaped like a tent.'],
+  ['Hemisphere','#e83e5c','A hemisphere is half of a sphere, like a dome.'],['Octahedron','#5b5bd6','An octahedron has eight triangle faces, like a diamond.']];
+function shadeHex(h,f){const n=parseInt(h.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;if(f<1){r*=f;g*=f;b*=f}else{const a=f-1;r+=(255-r)*a;g+=(255-g)*a;b+=(255-b)*a}return `rgb(${r|0},${g|0},${b|0})`}
+function draw3D(g,name,cx,cy,r,hex){const L=shadeHex(hex,1.38),M=hex,D=shadeHex(hex,.66);g.lineJoin='round';g.lineWidth=r*.045;g.strokeStyle='#1d1d2b';
+  const poly=(pts,fill)=>{g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fillStyle=fill;g.fill();g.stroke()};
+  const hgrad=(x0,x1)=>{const gr=g.createLinearGradient(x0,0,x1,0);gr.addColorStop(0,D);gr.addColorStop(.45,L);gr.addColorStop(1,D);return gr};
+  if(name==='Sphere'){const gr=g.createRadialGradient(cx-r*.35,cy-r*.4,r*.08,cx,cy,r);gr.addColorStop(0,L);gr.addColorStop(.6,M);gr.addColorStop(1,D);g.fillStyle=gr;g.beginPath();g.arc(cx,cy,r,0,7);g.fill();g.stroke()}
+  else if(name==='Cube'||name==='Rectangular Prism'){const cu=name==='Cube',w=cu?r*1.15:r*1.55,h=cu?r*1.15:r*.75,d=r*.55,x0=cx-(w+d)/2,y0=cy-(h+d)/2+d;
+    poly([[x0,y0],[x0+d,y0-d],[x0+w+d,y0-d],[x0+w,y0]],L);poly([[x0+w,y0],[x0+w+d,y0-d],[x0+w+d,y0+h-d],[x0+w,y0+h]],D);poly([[x0,y0],[x0+w,y0],[x0+w,y0+h],[x0,y0+h]],M)}
+  else if(name==='Cylinder'){const rx=r*.62,ry=r*.22,h=r*1.3;g.beginPath();g.moveTo(cx-rx,cy-h/2);g.lineTo(cx-rx,cy+h/2);g.ellipse(cx,cy+h/2,rx,ry,0,Math.PI,0,true);g.lineTo(cx+rx,cy-h/2);g.closePath();g.fillStyle=hgrad(cx-rx,cx+rx);g.fill();g.stroke();
+    g.beginPath();g.ellipse(cx,cy-h/2,rx,ry,0,0,7);g.fillStyle=L;g.fill();g.stroke()}
+  else if(name==='Cone'){const rx=r*.75,ry=r*.22,by=cy+r*.62;g.beginPath();g.moveTo(cx,cy-r*.95);g.lineTo(cx+rx,by);g.ellipse(cx,by,rx,ry,0,0,Math.PI,false);g.closePath();g.fillStyle=hgrad(cx-rx,cx+rx);g.fill();g.stroke()}
+  else if(name==='Pyramid'){const A=[cx,cy-r],FL=[cx-r*.85,cy+r*.55],FR=[cx+r*.3,cy+r*.78],BR=[cx+r*.9,cy+r*.38];poly([A,FL,FR],M);poly([A,FR,BR],D)}
+  else if(name==='Torus'){const gr=g.createRadialGradient(cx-r*.3,cy-r*.3,r*.1,cx,cy,r*1.05);gr.addColorStop(0,L);gr.addColorStop(.7,M);gr.addColorStop(1,D);
+    g.beginPath();g.ellipse(cx,cy,r,r*.6,0,0,7);g.fillStyle=gr;g.fill();g.stroke();g.beginPath();g.ellipse(cx,cy-r*.04,r*.4,r*.17,0,0,7);g.fillStyle='#fffdf6';g.fill();g.stroke()}
+  else if(name==='Triangular Prism'){const A=[cx-r*.95,cy+r*.55],Bp=[cx-r*.45,cy-r*.45],C=[cx+r*.05,cy+r*.55],dx=r*.85,dy=-r*.4;
+    poly([Bp,[Bp[0]+dx,Bp[1]+dy],[C[0]+dx,C[1]+dy],C],D);poly([A,Bp,C],M)}
+  else if(name==='Hemisphere'){const by=cy+r*.35,gr=g.createRadialGradient(cx-r*.3,by-r*.7,r*.1,cx,by,r*1.1);gr.addColorStop(0,L);gr.addColorStop(.6,M);gr.addColorStop(1,D);
+    g.beginPath();g.arc(cx,by,r,Math.PI,0);g.ellipse(cx,by,r,r*.28,0,0,Math.PI,false);g.closePath();g.fillStyle=gr;g.fill();g.stroke();g.beginPath();g.ellipse(cx,by,r,r*.28,0,Math.PI,0);g.stroke()}
+  else{const T=[cx,cy-r],Bt=[cx,cy+r],Lf=[cx-r*.75,cy],Rt=[cx+r*.75,cy],F=[cx-r*.12,cy+r*.18];poly([T,Lf,F],L);poly([T,F,Rt],M);poly([Lf,Bt,F],M);poly([F,Bt,Rt],D)}}
+function make3D(name,hex){const c=new THREE.Color(hex).convertSRGBToLinear(),mat=new THREE.MeshStandardMaterial({color:c,roughness:.35,metalness:.05,emissive:c,emissiveIntensity:.18});let geo;
+  switch(name){case'Sphere':geo=new THREE.SphereGeometry(.42,32,22);break;case'Cube':geo=new THREE.BoxGeometry(.68,.68,.68);break;case'Cone':geo=new THREE.ConeGeometry(.42,.85,40);break;
+    case'Cylinder':geo=new THREE.CylinderGeometry(.36,.36,.75,40);break;case'Pyramid':geo=new THREE.ConeGeometry(.56,.8,4);break;case'Torus':geo=new THREE.TorusGeometry(.32,.15,22,44);break;
+    case'Rectangular Prism':geo=new THREE.BoxGeometry(.95,.5,.5);break;case'Triangular Prism':geo=new THREE.CylinderGeometry(.45,.45,.85,3);geo.rotateZ(Math.PI/2);break;
+    case'Hemisphere':geo=new THREE.SphereGeometry(.46,32,16,0,Math.PI*2,0,Math.PI/2);break;default:geo=new THREE.OctahedronGeometry(.5)}
+  const g=new THREE.Group(),m=new THREE.Mesh(geo,mat);m.castShadow=true;g.add(m);
+  if(name==='Hemisphere'){mat.side=THREE.DoubleSide;const cap=new THREE.Mesh(new THREE.CircleGeometry(.46,32),mat);cap.rotation.x=Math.PI/2;g.add(cap)}
+  if(!['Sphere','Cone','Cylinder','Torus','Hemisphere'].includes(name))g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x1d1d2b})));
+  const halo=new THREE.Mesh(new THREE.TorusGeometry(.62,.025,8,40),new THREE.MeshBasicMaterial({color:0xffe14d,toneMapped:false}));halo.rotation.x=Math.PI/2;halo.position.y=-.56;g.add(halo);return g}let topic='Colors';
 const SHAPE_COL=['#e8322f','#2f7df6','#2fb84a','#ffd21f','#ff6fb1','#8a4be0','#ff8a1f','#e8322f','#2f7df6','#ffd21f'];
 function drawShape(g,name,cx,cy,r,col){g.fillStyle=col;g.strokeStyle='#1d1d2b';g.lineWidth=r*.06;g.beginPath();
   if(name==='Circle')g.arc(cx,cy,r,0,7);
@@ -834,23 +869,28 @@ function drawItem(g,S,it,card){g.clearRect(0,0,S,S);const c=S/2;
   if(!card){g.fillStyle='#fffdf6';g.beginPath();g.arc(c,c,c-6,0,7);g.fill();g.lineWidth=S*.05;g.strokeStyle='#ffd21f';g.stroke()}
   if(it.kind==='color'){g.fillStyle=it.hex;g.beginPath();g.arc(c,c,S*.3,0,7);g.fill();g.lineWidth=S*.02;g.strokeStyle='#1d1d2b';g.stroke()}
   else if(it.kind==='shape')drawShape(g,it.name,c,c,S*.3,it.hex);
+  else if(it.kind==='shape3d')draw3D(g,it.name,c,c,S*.3,it.hex);
   else{g.fillStyle=it.hex;g.textAlign='center';g.textBaseline='middle';g.font=`800 ${it.kind==='letter'?S*.4:S*.5}px "Baloo 2", system-ui, sans-serif`;
     g.fillText(it.glyph,c,it.kind==='number'&&card?c*.78:c*1.04);
     if(it.kind==='number'&&card){const n=it.n,per=Math.min(5,n),rows=Math.ceil(n/5),rr=S*.045;for(let k=0;k<n;k++){const row=k/5|0,col=k%5,cnt=row<rows-1?5:n-row*5;
       g.fillStyle=it.hex;g.beginPath();g.arc(c+(col-(cnt-1)/2)*rr*2.6,S*.74+row*rr*2.6,rr,0,7);g.fill()}}}}
 function makeItems(){if(topic==='Colors')return COLORS.map(([n,h])=>({kind:'color',name:n,hex:h,say:n}));
   if(topic==='Shapes')return SHAPES.map((n,i)=>({kind:'shape',name:n,hex:SHAPE_COL[i],say:n}));
+  if(topic==='3D Shapes')return SHAPES3D.map(([n,h,f])=>({kind:'shape3d',name:n,hex:h,say:n+'! '+f}));
   if(topic==='Numbers')return NUMW.map((w,i)=>({kind:'number',n:i+1,glyph:String(i+1),name:w[0].toUpperCase()+w.slice(1),hex:SHAPE_COL[i],say:'Number '+w+'!'}));
   const ks=Object.keys(LETTERS).sort(()=>Math.random()-.5).slice(0,10);
   return ks.map((k,i)=>({kind:'letter',glyph:k+k.toLowerCase(),name:k+' is for '+LETTERS[k],hex:SHAPE_COL[i],say:k+'. '+k+' is for '+LETTERS[k]+'.'}))}
 const SPOTS=[[0,6],[5,11],[5,17.5],[-5,8],[0,24],[-1.8,14.5],[8.5,3],[-8,3],[3,29],[-4,21]];
+const SPOTS_T=[[0,5],[2.6,8.5],[-3.2,9],[6.2,1.2],[-6,2],[0,12.6],[2.4,15],[-4.2,15.5],[8,-3.4],[-8,-3.4]];
 const tokens=[];let found=0;
-function clearTokens(){tokens.forEach(t=>{scene.remove(t.spr);t.spr.material.map.dispose();t.spr.material.dispose()});tokens.length=0}
+function clearTokens(){tokens.forEach(t=>{scene.remove(t.spr);t.spr.traverse(o=>{if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}if(o.geometry&&!o.isSprite)o.geometry.dispose()})});tokens.length=0}
 function spawnTokens(){clearTokens();found=0;if(topic==='Off'){$('foundWrap').style.display='none';return}$('foundWrap').style.display='';
-  makeItems().forEach((it,i)=>{const cv=document.createElement('canvas');cv.width=cv.height=256;drawItem(cv.getContext('2d'),256,it,false);
-    const tx=new THREE.CanvasTexture(cv);tx.encoding=THREE.sRGBEncoding;
-    const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,fog:false,toneMapped:false}));spr.scale.setScalar(.85);
-    const [x,z]=SPOTS[i];const base=surfaceAt(x,z)+1.05;spr.position.set(x,base,z);scene.add(spr);tokens.push({spr,it,base,ph:i,got:false})});
+  const SP=toddler?SPOTS_T:SPOTS;
+  makeItems().forEach((it,i)=>{let spr,is3d=it.kind==='shape3d';
+    if(is3d)spr=make3D(it.name,it.hex);
+    else{const cv=document.createElement('canvas');cv.width=cv.height=256;drawItem(cv.getContext('2d'),256,it,false);
+      const tx=new THREE.CanvasTexture(cv);tx.encoding=THREE.sRGBEncoding;spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,fog:false,toneMapped:false}));spr.scale.setScalar(.85)}
+    const [x,z]=SP[i];const base=surfaceAt(x,z)+(is3d?1.0:1.05);spr.position.set(x,base,z);scene.add(spr);tokens.push({spr,it,base,ph:i,got:false,is3d})});
   $('found').textContent='0/'+tokens.length}
 let voiceOn=true,voices=[],voiceIdx=0;
 const VSCORE=[[/natural|neural/i,60],[/premium/i,55],[/enhanced/i,50],[/siri/i,45],[/aria|jenny|libby|sonia|michelle/i,38],[/google us english|google uk english female/i,40],[/samantha|ava|allison|zoe|evan|nicky|serena|karen|moira|tessa|kate|susan/i,25],[/novelty|bad news|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|fred|junior|ralph|kathy|bahh/i,-200]];
@@ -908,7 +948,7 @@ $('chips').innerHTML=WORLDS.map(w=>`<button class="chip" data-w="${w.id}">${w.n}
   '<button class="chip" id="ctl">Controls: <span id="ctlName">Easy</span></button><button class="chip learn" id="learn">Learn: <span id="topicName">Colors</span></button><button class="chip" id="voice" aria-pressed="true">Voice: <span id="voiceName">Auto</span></button>'+
   '<button class="chip" id="theme"><span class="dot"></span><span id="themeName">Blue</span></button><button class="chip" id="reset">Reset</button>';
 let started=false;
-function setWorld(id){if(started&&W&&W.id===id)return;if(started&&ride){ride=null;grounded=true}if(started&&grind){grind=null;stopGrindSound();robot.rotation.set(0,yaw,0)}W=WORLDS.find(w=>w.id===id)||WORLDS[0];HILL=W.hills;rebuildTerrain();
+function setWorld(id){if(started&&W&&W.id===id)return;if(started){goTo=null;goMark.visible=false}if(started&&ride){ride=null;grounded=true}if(started&&grind){grind=null;stopGrindSound();robot.rotation.set(0,yaw,0)}W=WORLDS.find(w=>w.id===id)||WORLDS[0];HILL=W.hills;rebuildTerrain();
   ON_GROUND.forEach(e=>e.o.position.y=terrainH(e.x,e.z)+e.off);
   skyMat.uniforms.top.value.copy(lin(W.top));skyMat.uniforms.hor.value.copy(lin(W.hor));scene.fog=new THREE.Fog(lin(W.hor),W.fog[0],W.fog[1]);
   if(!TEXN)TEXN={reg:normalFrom(regolith.image,4,26),grass:normalFrom(grass.image,2.5,45),deck:normalFrom(deck.image,2,100),candy:normalFrom(candyTex.image,1.2,60)};gMat.map=TEX[W.tex];gMat.normalMap=TEXN[W.tex];gMat.color.copy(lin(W.ground));gMat.needsUpdate=true;mRock.color.copy(lin(W.rock));dMat.color.copy(lin(W.dustC));
@@ -929,7 +969,7 @@ $('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   if(b.id==='reset')reset();else if(b.id==='theme')setTheme(theme==='blue'?'orange':'blue');
   else if(b.id==='voice'){if(!voices.length)rankVoices();if(!voiceOn){voiceOn=true;voiceIdx=0}else if(voiceIdx<voices.length-1)voiceIdx++;else voiceOn=false;
     b.setAttribute('aria-pressed',voiceOn);updVoiceChip();if(voiceOn)speak("Hi! I'm BeepBoop. Let's go explore!");else try{speechSynthesis.cancel()}catch(_){}}
-  else if(b.id==='ctl'){setControl(!easy);camAng=yaw+Math.PI}
+  else if(b.id==='ctl'){setControl(ctlMode==='easy'?'toddler':ctlMode==='toddler'?'pro':'easy');camAng=yaw+Math.PI;if(topic!=='Off')spawnTokens();if(toddler)speak('Tap where you want me to go!')}
   else if(b.id==='learn'){topic=TOPICS[(TOPICS.indexOf(topic)+1)%TOPICS.length];$('topicName').textContent=topic;spawnTokens();if(topic!=='Off')speak("Let's find "+topic.toLowerCase()+'!')}
   else if(b.dataset.w)setWorld(b.dataset.w)});
 
@@ -946,9 +986,10 @@ const held={jet:false,dive:false};let jetTap=false;
 function hold(el,key){el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}if(key==='jet'&&!held.jet)jetTap=true;held[key]=true;el.classList.add('on');hideHint()});
   const off=()=>{held[key]=false;el.classList.remove('on')};el.addEventListener('pointerup',off);el.addEventListener('pointercancel',off)}
 hold($('bJet'),'jet');hold($('bDive'),'dive');
-let easy=true;try{easy=localStorage.getItem('quadCtl')!=='pro'}catch(_){}
-function setControl(e){easy=e;document.body.classList.toggle('easy',e);$('ctlName').textContent=e?'Easy':'Pro';$('bJet').textContent=e?'JUMP':'JET';
-  $('sl').querySelector('span').textContent=e?'Go':'Walk';try{localStorage.setItem('quadCtl',e?'easy':'pro')}catch(_){}}
+let ctlMode='easy';try{ctlMode=localStorage.getItem('quadCtl')||'easy';if(!['easy','toddler','pro'].includes(ctlMode))ctlMode='easy'}catch(_){}
+let easy=ctlMode!=='pro',toddler=ctlMode==='toddler';
+function setControl(m){if(typeof m==='boolean')m=m?'easy':'pro';ctlMode=m;easy=m!=='pro';toddler=m==='toddler';document.body.classList.toggle('easy',easy);document.body.classList.toggle('toddler',toddler);
+  $('ctlName').textContent=toddler?'Toddler':easy?'Easy':'Pro';$('bJet').textContent=easy?'JUMP':'JET';$('sl').querySelector('span').textContent=easy?'Go':'Walk';try{localStorage.setItem('quadCtl',m)}catch(_){}}
 const MODES=[{n:'SLOW',v:.6,w:.9},{n:'WALK',v:1.3,w:1.4},{n:'RUN',v:2.4,w:1.9}];let mode=1;
 let sitting=false,camMode=0;const CAMS=['CAM','SIDE','FAR'];
 const toggleSit=()=>{sitting=!sitting;$('bSit').textContent=sitting?'STAND':'SIT'};
@@ -962,11 +1003,22 @@ addEventListener('keyup',e=>{keys[e.code]=0;if(e.code==='Space')held.jet=false;i
 /* drag to look, pinch to zoom */
 let orbY=0,camAng=Math.PI,camPitch=.32,zoom=1,lastLook=-9;const wrapA=a=>{a=(a+Math.PI)%(Math.PI*2);if(a<0)a+=Math.PI*2;return a-Math.PI};const pts=new Map();let pinch0=0,zoom0=1;
 const cv=$('c');
-cv.addEventListener('pointerdown',e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}if(pts.size===2){const [a,b]=[...pts.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);zoom0=zoom}hideHint()});
+const tapS=new Map(),ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let goTo=null,goBlock=0;
+const goMark=new THREE.Mesh(new THREE.RingGeometry(.35,.56,36),new THREE.MeshBasicMaterial({color:0x5fe36b,toneMapped:false,transparent:true,opacity:.9,side:THREE.DoubleSide}));goMark.rotation.x=-Math.PI/2;goMark.visible=false;scene.add(goMark);
+const guide=new THREE.Group();{const sh=new THREE.Shape();[[0,.62],[.42,.12],[.17,.12],[.17,-.45],[-.17,-.45],[-.17,.12],[-.42,.12]].forEach(([x,y],i)=>i?sh.lineTo(x,y):sh.moveTo(x,y));sh.closePath();
+  const gg=new THREE.ShapeGeometry(sh);gg.scale(1.35,1.35,1);gg.rotateX(-Math.PI/2);gg.scale(1,1,-1);
+  const out=new THREE.Mesh(gg,new THREE.MeshBasicMaterial({color:0x1d1d2b,transparent:true,opacity:.85,depthWrite:false,side:THREE.DoubleSide}));out.scale.set(1.18,1,1.14);out.position.y=-.005;
+  guide.add(out,new THREE.Mesh(gg,new THREE.MeshBasicMaterial({color:0xffd23f,toneMapped:false,transparent:true,depthWrite:false,side:THREE.DoubleSide})))}guide.visible=false;scene.add(guide);
+function tapGo(px,py){const r=cv.getBoundingClientRect();ndc.set((px-r.left)/r.width*2-1,-(py-r.top)/r.height*2+1);ray.setFromCamera(ndc,cam);
+  const objs=tokens.filter(k=>!k.got).map(k=>k.spr),hit=ray.intersectObjects(objs,true)[0];let tx,tz;
+  if(hit){let o=hit.object;while(o.parent&&!objs.includes(o))o=o.parent;tx=o.position.x;tz=o.position.z}
+  else{const o=ray.ray.origin,d=ray.ray.direction;let ok=false;for(let s2=.5;s2<150;s2+=.3){const x=o.x+d.x*s2,y=o.y+d.y*s2,z=o.z+d.z*s2;if(y<=surfaceAt(x,z)){tx=x;tz=z;ok=true;break}}if(!ok)return}
+  goTo={x:tx,z:tz};goBlock=0;goMark.position.set(tx,surfaceAt(tx,tz)+.07,tz);goMark.visible=true;tone(660,990,.12,'sine',.12)}
+cv.addEventListener('pointerdown',e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY});tapS.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now(),n:pts.size});try{cv.setPointerCapture(e.pointerId)}catch(_){}if(pts.size===2){const [a,b]=[...pts.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);zoom0=zoom}hideHint()});
 cv.addEventListener('pointermove',e=>{const p=pts.get(e.pointerId);if(!p)return;
   if(pts.size===1){const dd=(e.clientX-p.x)*.006;orbY-=dd;camAng-=dd;camPitch=Math.max(.02,Math.min(1.3,camPitch+(e.clientY-p.y)*.004))}
   p.x=e.clientX;p.y=e.clientY;if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0)zoom=Math.max(.45,Math.min(3,zoom0*pinch0/d))}lastLook=t});
-const lift_=e=>{pts.delete(e.pointerId);pinch0=0};cv.addEventListener('pointerup',lift_);cv.addEventListener('pointercancel',lift_);
+const lift_=e=>{const ts=tapS.get(e.pointerId);tapS.delete(e.pointerId);if(e.type==='pointerup'&&ts&&easy&&ts.n===1&&pts.size===1&&performance.now()-ts.t<450&&Math.hypot(e.clientX-ts.x,e.clientY-ts.y)<14)tapGo(e.clientX,e.clientY);pts.delete(e.pointerId);pinch0=0};cv.addEventListener('pointerup',lift_);cv.addEventListener('pointercancel',lift_);
 cv.addEventListener('wheel',e=>{zoom=Math.max(.45,Math.min(3,zoom*(1+e.deltaY*.001)))},{passive:true});
 let hintT=setTimeout(()=>hideHint(),10000);function hideHint(){$('hint').classList.add('gone');clearTimeout(hintT)}
 const dz=v=>Math.abs(v)<.12?0:(v-Math.sign(v)*.12)/.88;
@@ -978,10 +1030,10 @@ let yaw=0,grounded=true,gait=0,amp=0,squash=0,t=0,fuel=100,onPad=null,lastG=0,vF
 const tzoo=a=>a.g.position.y;
 const hopMark=new THREE.Mesh(new THREE.TorusGeometry(.6,.07,8,36),new THREE.MeshBasicMaterial({color:0xffe14d,toneMapped:false,transparent:true,opacity:.95}));hopMark.rotation.x=Math.PI/2;hopMark.visible=false;scene.add(hopMark);
 const xv2=new THREE.Vector3(),mG=new THREE.Matrix4();
-function reset(){robot.position.set(0,.55,-1);vel.set(0,0,0);yaw=0;grounded=true;squash=0;fuel=100;lastG=0;vF=vL=wY=0;jumpT=-1;crouch=0;camAng=Math.PI;climb=null;climbHold=0;ride=null;rideOffer=null;grind=null;grindCD=0;stopGrindSound();robot.rotation.set(0,0,0);
+function reset(){robot.position.set(0,.55,-1);vel.set(0,0,0);yaw=0;grounded=true;squash=0;fuel=100;lastG=0;vF=vL=wY=0;jumpT=-1;crouch=0;camAng=Math.PI;climb=null;climbHold=0;goTo=null;goMark.visible=false;ride=null;rideOffer=null;grind=null;grindCD=0;stopGrindSound();robot.rotation.set(0,0,0);
   const g=surfaceAt(0,-1,.2);robot.position.y=g+.55;lastG=g}
 let saved='blue';try{saved=localStorage.getItem('quadTheme')||'blue'}catch(_){}
-setTheme(saved);setControl(easy);updVoiceChip();setWorld('moon');reset();spawnTokens();started=true;
+setTheme(saved);setControl(ctlMode);updVoiceChip();setWorld('moon');reset();spawnTokens();started=true;
 const camPos=new THREE.Vector3(0,1.6,-4),tmp=new THREE.Vector3();let fr=0,last=performance.now();
 
 function frame(now){requestAnimationFrame(frame);
@@ -990,11 +1042,12 @@ function frame(now){requestAnimationFrame(frame);
   let turn=dz(SR.x)+((keys.KeyE||keys.ArrowRight?1:0)-(keys.KeyQ||keys.ArrowLeft?1:0));
   mx=Math.max(-1,Math.min(1,mx));my=Math.max(-1,Math.min(1,my));turn=Math.max(-1,Math.min(1,turn));
   const fx=Math.sin(yaw),fz=Math.cos(yaw),lx=Math.cos(yaw),lz=-Math.sin(yaw);   // forward and local +x (robot's left)
-  const M=MODES[mode],h=(sitting?.33:.55),pos=robot.position;
+  const M=toddler?{v:1,w:1.2}:MODES[mode],h=(sitting?.33:.55),pos=robot.position;
   const ground=surfaceAt(pos.x,pos.z,.2);
   const pvF=vF;
   let eMag=0,eHead=yaw,eX=0,eZ=0;
   if(easy){eMag=Math.min(1,Math.hypot(mx,my));if(eMag>0){const cfx=-Math.sin(camAng),cfz=-Math.cos(camAng);eX=cfx*my-cfz*mx;eZ=cfz*my+cfx*mx;const el=Math.hypot(eX,eZ)||1;eX/=el;eZ/=el;eHead=Math.atan2(eX,eZ)}}
+  if(easy&&goTo){if(eMag>0||ride||grind){goTo=null;goMark.visible=false}else{const gx=goTo.x-pos.x,gz=goTo.z-pos.z,gd=Math.hypot(gx,gz);if(gd<.6){goTo=null;goMark.visible=false}else{eMag=Math.min(1,.4+gd/2.5);eX=gx/gd;eZ=gz/gd;eHead=Math.atan2(eX,eZ)}}}
   grindCD=Math.max(0,grindCD-dt);hop=null;rideOffer=null;
   if(W.id==='fun'&&!ride&&!grind&&!climb&&grounded&&RIDES.wheel){
     if(Math.hypot(pos.x-RIDES.wheel.c.x,pos.z-RIDES.wheel.c.z)<6.5)rideOffer=RIDES.wheel;
@@ -1099,7 +1152,7 @@ function frame(now){requestAnimationFrame(frame);
     else climbHold=0}
   else if(!blocked)climbHold=0;
   if(grounded){vF=vel.x*fx+vel.z*fz;vL=vel.x*lx+vel.z*lz}
-  aF+=(((vF-pvFc)/Math.max(dt,1e-3))-aF)*Math.min(1,8*dt);pvFc=vF;wasBlocked=blocked&&Math.hypot(vel.x,vel.z)<.05;
+  aF+=(((vF-pvFc)/Math.max(dt,1e-3))-aF)*Math.min(1,8*dt);pvFc=vF;wasBlocked=blocked&&Math.hypot(vel.x,vel.z)<.05;if(goTo){goBlock=wasBlocked&&!climb?goBlock+dt:0;if(goBlock>1.6){goTo=null;goMark.visible=false}}
   pos.y+=grounded?0:vel.y*dt;
   g2=surfaceAt(pos.x,pos.z,.2);
   if(!grounded&&pos.y<=g2+h&&vel.y<=0){const imp=-vel.y;grounded=true;squash=Math.min(.16,imp*.04);pos.y=g2+h;vel.y=0;lastG=g2;
@@ -1144,8 +1197,11 @@ function frame(now){requestAnimationFrame(frame);
 
   /* tokens */
   tokens.forEach(tk=>{if(tk.got)return;tk.spr.position.y=tk.base+Math.sin(t*2+tk.ph)*.12;
-    const s=.85+Math.sin(t*3+tk.ph)*.05;tk.spr.scale.set(s,s,s);
+    if(tk.is3d){tk.spr.rotation.y+=dt*1.1;tk.spr.rotation.x=Math.sin(t*.8+tk.ph)*.25}else{const s=.85+Math.sin(t*3+tk.ph)*.05;tk.spr.scale.set(s,s,s)}
     tmp.set(pos.x,pos.y+body.position.y,pos.z);if(tmp.distanceTo(tk.spr.position)<1.15)collect(tk)});
+  {let gt=null,gd=1e9;if(toddler&&topic!=='Off'&&!ride&&!grind)tokens.forEach(tk=>{if(tk.got)return;const d=Math.hypot(tk.spr.position.x-pos.x,tk.spr.position.z-pos.z);if(d<gd){gd=d;gt=tk}});
+    guide.visible=!!gt&&gd>2.8;if(guide.visible){const ga=Math.atan2(gt.spr.position.x-pos.x,gt.spr.position.z-pos.z),gr=2+Math.sin(t*5)*.15,gx=pos.x+Math.sin(ga)*gr,gz=pos.z+Math.cos(ga)*gr;guide.position.set(gx,Math.max(surfaceAt(gx,gz),pos.y-.55)+.14,gz);guide.rotation.y=ga}}
+  if(goMark.visible){const gs=1+Math.sin(t*6)*.12;goMark.scale.set(gs,gs,gs)}
   if(cardT>0){cardT-=dt;if(cardT<=0)$('card').classList.remove('show')}
 
   ANIM.forEach(f=>f(dt,t));stepDust(dt);stepSparks(dt);
