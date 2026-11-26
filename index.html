@@ -19,13 +19,14 @@
 html,body{margin:0;height:100%;overflow:hidden;background:#05060a;color:var(--ink);font:15px/1.3 "Chakra Petch",system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .top{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 10px) 0 calc(env(safe-area-inset-left) + 10px);display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.chips{display:flex;gap:6px;flex-wrap:wrap;pointer-events:auto}
-.chip{min-height:40px;padding:0 12px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font:700 14px "Chakra Petch",sans-serif;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);white-space:nowrap}
+.chips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;-webkit-overflow-scrolling:touch;max-width:100%;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:40px;padding:0 12px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font:700 14px "Chakra Petch",sans-serif;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);white-space:nowrap}
 .chip .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--acc);margin-right:7px;vertical-align:-1px}
 .chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--on)}
 .chip.learn{border-color:#ffd21f}
 .chip:focus-visible,.btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.read{align-self:flex-start;display:flex;gap:10px;align-items:center;padding:6px 12px;border-radius:10px;background:var(--panel);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.read{align-self:flex-start;display:flex;flex-wrap:wrap;max-width:100%;gap:4px 10px;align-items:center;padding:6px 12px;border-radius:10px;background:var(--panel);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .read b{color:var(--acc);font-weight:700}
 .status{align-self:flex-start;font-size:13px;opacity:.85;padding-left:4px}
 .fuel{display:inline-block;width:60px;height:9px;border-radius:5px;background:rgba(255,255,255,.18);overflow:hidden;vertical-align:middle}
@@ -47,6 +48,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05060a;color:var(--in
 body.easy .stick.r{display:none}
 body.easy .btns{bottom:calc(env(safe-area-inset-bottom) + 18px);right:calc(env(safe-area-inset-right) + 18px)}
 body.easy #bJet{grid-column:1 / span 2;justify-self:center;width:88px;height:88px;font-size:15px;order:9}
+@media(max-width:520px){.read{font-size:12px;gap:3px 8px;padding:5px 9px}.fuel{width:44px}.status{font-size:12px}.chip{min-height:38px;font-size:13px;padding:0 11px}
+  .stick{width:128px;height:128px}.btns{grid-template-columns:repeat(2,52px)}.btn{width:52px;height:52px}body.easy #bJet{width:84px;height:84px}.card{padding:12px 18px 10px}}
 @media(max-height:460px){.stick{width:118px;height:118px}.btns{bottom:calc(env(safe-area-inset-bottom) + 18px);right:calc(env(safe-area-inset-right) + 150px)}.status{display:none}.chip{min-height:36px;font-size:13px;padding:0 10px}}
 @media(prefers-reduced-motion:reduce){.hint,.card{transition:none}}
 </style></head><body>
@@ -77,8 +80,9 @@ renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmic
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();
 const cam=new THREE.PerspectiveCamera(55,1,.05,4000);
-const resize=()=>{renderer.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};
-addEventListener('resize',resize);resize();
+let portrait=false;
+const resize=()=>{renderer.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;portrait=cam.aspect<1;cam.fov=portrait?72:55;cam.updateProjectionMatrix()};
+addEventListener('resize',resize);addEventListener('orientationchange',()=>{setTimeout(resize,150);setTimeout(resize,500)});resize();
 
 /* ---------- lights ---------- */
 const hemi=new THREE.HemisphereLight(0xffffff,0x444444,.4);scene.add(hemi);
@@ -770,7 +774,7 @@ function frame(now){requestAnimationFrame(frame);
   if(t-lastLook>2.5&&pts.size===0)orbY*=Math.exp(-1.4*dt);
   if(easy&&t-lastLook>1.2&&pts.size===0&&spd>.15)camAng+=wrapA(yaw+cbase-camAng)*Math.min(1,.8*dt);
   const alt=Math.max(0,pos.y-h-g2);
-  const dist=([3,3.3,8][camMode]+Math.min(6,alt*.15))*zoom;
+  const dist=([3,3.3,8][camMode]+Math.min(6,alt*.15))*zoom*(portrait?1.25:1);
   const ang=easy?camAng:yaw+cbase+orbY;camAng=ang;
   const cpch=[camPitch,camPitch*.45,Math.max(.6,camPitch)][camMode];
   const ux=Math.sin(ang)*Math.cos(cpch),uy=Math.sin(cpch),uz=Math.cos(ang)*Math.cos(cpch);
