@@ -15,5 +15,6 @@ It opens full-screen like a regular app and keeps working without internet after
 - Easy one-stick controls, a Toddler mode (tap the ground to walk there, one big stick and JUMP button, guide arrow), or classic two-stick Pro controls
 - Climbing onto crates, platforms, cars and the rover
 - Toddler learning mode: find floating tokens for colors, shapes, spinning 3D shapes, numbers and letters, read aloud in the most natural voice the phone has (tap **Voice** to try the others)
+- Play timer (5–30 min): one-minute warning, then a sleepy "All done!" screen that a grown-up unlocks by holding a button for 3 seconds
 
 Single-page web app built with three.js (r128). No build step: the files here are served as-is by GitHub Pages.

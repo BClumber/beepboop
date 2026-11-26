@@ -1,5 +1,5 @@
 // BeepBoop offline cache. Bump VERSION when files change so phones pick up the update.
-const VERSION = 'beepboop-v9';
+const VERSION = 'beepboop-v10';
 const CORE = ['./', 'index.html', 'three.min.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-64.png'];
 

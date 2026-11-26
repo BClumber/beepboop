@@ -54,6 +54,14 @@ body.toddler .btns{grid-template-columns:1fr}body.toddler #bJet{width:124px;heig
 @media(max-width:520px){.read{font-size:12px;gap:3px 8px;padding:5px 9px}.fuel{width:44px}.status{font-size:12px}.chip{min-height:38px;font-size:13px;padding:0 11px}
   .stick{width:128px;height:128px}.btns{grid-template-columns:repeat(2,52px)}.btn{width:52px;height:52px}body.easy #bJet{width:84px;height:84px}.card{padding:12px 18px 10px}}
 @media(max-height:460px){.stick{width:118px;height:118px}.btns{bottom:calc(env(safe-area-inset-bottom) + 18px);right:calc(env(safe-area-inset-right) + 150px)}.status{display:none}.chip{min-height:36px;font-size:13px;padding:0 10px}}
+#bye{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 35%,#24346e,#0b1030 70%);color:#fff;text-align:center;font-family:"Baloo 2",system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#bye.show{display:flex;animation:byeIn .8s ease}@keyframes byeIn{from{opacity:0}to{opacity:1}}
+#bye .moon{width:110px;height:110px;border-radius:50%;box-shadow:-22px 10px 0 0 #ffe07a;transform:rotate(-20deg);margin-bottom:4px}
+#bye h1{margin:0;font-size:clamp(34px,8vw,60px);line-height:1}#bye p{margin:0;font-size:clamp(17px,4vw,24px);opacity:.85}
+#bye .zz{position:absolute;font-size:28px;opacity:0;animation:zz 3s infinite}@keyframes zz{0%{opacity:0;transform:translate(0,0)}30%{opacity:.9}100%{opacity:0;transform:translate(30px,-60px)}}
+#byeHold{margin-top:26px;position:relative;overflow:hidden;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:9px 18px;font:600 13px system-ui,sans-serif;opacity:.75}
+#byeHold i{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(95,227,107,.55);z-index:-1}
+#tmr.warn{background:#ffb300;color:#1d1d2b;animation:tp 1s infinite}@keyframes tp{50%{transform:scale(1.08)}}
 @media(prefers-reduced-motion:reduce){.hint,.card{transition:none}}
 </style></head><body>
 <canvas id="c"></canvas>
@@ -69,6 +77,7 @@ body.toddler .btns{grid-template-columns:1fr}body.toddler #bJet{width:124px;heig
   <button class="btn" id="bSit">SIT</button><button class="btn" id="bSpd">WALK</button>
   <button class="btn" id="bCam">CAM</button>
 </div>
+<div id="bye"><div class="moon"></div><span class="zz" style="left:58%;top:22%">z</span><span class="zz" style="left:61%;top:19%;animation-delay:1s">Z</span><h1>All done!</h1><p>BeepBoop is sleepy. Night-night!</p><button id="byeHold">Grown-ups: hold 3 seconds to keep playing<i></i></button></div>
 <div class="card" id="card"><canvas id="cardCv" width="300" height="300"></canvas><div id="cardTxt"></div></div>
 <div class="hint" id="hint">Push the stick the way you want to go, or just tap the ground and the robot walks there.<br>Drag the screen to look around, pinch to zoom.<br>Walk into a crate or ledge to climb onto it. Tap <b>JUMP</b> to jump, hold it to fly. Stand on a <b>FUEL</b> pad to refill.<br>Find the floating tokens to learn colors, shapes, 3D shapes, numbers and letters.</div>
 <script src="three.min.js"></script>
@@ -945,7 +954,7 @@ const WORLDS=[
   note:'The Zoo! Walk up to an animal and tap JUMP to say hi.',fact:'Welcome to the zoo! Walk up to the animals and say hi!'}];
 let W=WORLDS[0];
 $('chips').innerHTML=WORLDS.map(w=>`<button class="chip" data-w="${w.id}">${w.n}</button>`).join('')+
-  '<button class="chip" id="ctl">Controls: <span id="ctlName">Easy</span></button><button class="chip learn" id="learn">Learn: <span id="topicName">Colors</span></button><button class="chip" id="voice" aria-pressed="true">Voice: <span id="voiceName">Auto</span></button>'+
+  '<button class="chip" id="ctl">Controls: <span id="ctlName">Easy</span></button><button class="chip learn" id="learn">Learn: <span id="topicName">Colors</span></button><button class="chip" id="tmr">Timer: <span id="tmrName">Off</span></button><button class="chip" id="voice" aria-pressed="true">Voice: <span id="voiceName">Auto</span></button>'+
   '<button class="chip" id="theme"><span class="dot"></span><span id="themeName">Blue</span></button><button class="chip" id="reset">Reset</button>';
 let started=false;
 function setWorld(id){if(started&&W&&W.id===id)return;if(started){goTo=null;goMark.visible=false}if(started&&ride){ride=null;grounded=true}if(started&&grind){grind=null;stopGrindSound();robot.rotation.set(0,yaw,0)}W=WORLDS.find(w=>w.id===id)||WORLDS[0];HILL=W.hills;rebuildTerrain();
@@ -970,6 +979,7 @@ $('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   else if(b.id==='voice'){if(!voices.length)rankVoices();if(!voiceOn){voiceOn=true;voiceIdx=0}else if(voiceIdx<voices.length-1)voiceIdx++;else voiceOn=false;
     b.setAttribute('aria-pressed',voiceOn);updVoiceChip();if(voiceOn)speak("Hi! I'm BeepBoop. Let's go explore!");else try{speechSynthesis.cancel()}catch(_){}}
   else if(b.id==='ctl'){setControl(ctlMode==='easy'?'toddler':ctlMode==='toddler'?'pro':'easy');camAng=yaw+Math.PI;if(topic!=='Off')spawnTokens();if(toddler)speak('Tap where you want me to go!')}
+  else if(b.id==='tmr'){if(tmrHeld){tmrHeld=false;return}if(playLeft>0&&TIMES[tmrIdx]){speak('Ask a grown-up to change the timer.');$('tmrName').textContent='Hold';setTimeout(updTimer,1200);return}nextTimer()}
   else if(b.id==='learn'){topic=TOPICS[(TOPICS.indexOf(topic)+1)%TOPICS.length];$('topicName').textContent=topic;spawnTokens();if(topic!=='Off')speak("Let's find "+topic.toLowerCase()+'!')}
   else if(b.dataset.w)setWorld(b.dataset.w)});
 
@@ -1033,11 +1043,31 @@ const xv2=new THREE.Vector3(),mG=new THREE.Matrix4();
 function reset(){robot.position.set(0,.55,-1);vel.set(0,0,0);yaw=0;grounded=true;squash=0;fuel=100;lastG=0;vF=vL=wY=0;jumpT=-1;crouch=0;camAng=Math.PI;climb=null;climbHold=0;goTo=null;goMark.visible=false;ride=null;rideOffer=null;grind=null;grindCD=0;stopGrindSound();robot.rotation.set(0,0,0);
   const g=surfaceAt(0,-1,.2);robot.position.y=g+.55;lastG=g}
 let saved='blue';try{saved=localStorage.getItem('quadTheme')||'blue'}catch(_){}
-setTheme(saved);setControl(ctlMode);updVoiceChip();setWorld('moon');reset();spawnTokens();started=true;
+const TIMES=[0,5,10,15,20,30];let tmrIdx=0,playLeft=0,warned=false,gameOver=false,tmrHeld=false,lastSec=-1;
+try{tmrIdx=Math.max(0,TIMES.indexOf(+localStorage.getItem('bbTimer')||0))}catch(_){}
+const fmtT=x=>{x=Math.ceil(x);return (x/60|0)+':'+String(x%60).padStart(2,'0')};
+function updTimer(){const el=$('tmrName');if(!el)return;el.textContent=!TIMES[tmrIdx]?'Off':fmtT(playLeft);$('tmr').classList.toggle('warn',!!TIMES[tmrIdx]&&playLeft<=60&&!gameOver)}
+function startTimer(){playLeft=TIMES[tmrIdx]*60;warned=false;lastSec=-1;updTimer()}
+function nextTimer(){tmrIdx=(tmrIdx+1)%TIMES.length;try{localStorage.setItem('bbTimer',TIMES[tmrIdx])}catch(_){}startTimer();
+  if(TIMES[tmrIdx])speak(TIMES[tmrIdx]+' minutes of play time. Have fun!')}
+function endGame(){gameOver=true;goTo=null;goMark.visible=false;if(!sitting)toggleSit();held.jet=held.dive=false;SL.x=SL.y=SR.x=SR.y=0;
+  try{localStorage.setItem('bbLock','1')}catch(_){}$('bye').classList.add('show');$('tmr').classList.remove('warn');
+  tone(660,440,.5,'sine',.15);tone(523,330,.7,'sine',.12,.45);speak("Time's up! Great playing today. BeepBoop is going to sleep now. Bye-bye!")}
+function unlockGame(){gameOver=false;$('bye').classList.remove('show');try{localStorage.removeItem('bbLock')}catch(_){}if(sitting)toggleSit();startTimer();speak("Yay! Let's play some more!")}
+{let hT=null,hS=0;const hb=$('byeHold'),bar=hb.querySelector('i');const stop=()=>{clearInterval(hT);hT=null;bar.style.width='0'};
+  hb.addEventListener('pointerdown',e=>{e.preventDefault();hS=performance.now();clearInterval(hT);hT=setInterval(()=>{const f=(performance.now()-hS)/3000;bar.style.width=Math.min(100,f*100)+'%';if(f>=1){stop();unlockGame()}},50)});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>hb.addEventListener(ev,stop));
+  $('bye').addEventListener('pointerdown',e=>e.stopPropagation());
+  let cT=null;const tb=$('tmr');tb.addEventListener('pointerdown',()=>{clearTimeout(cT);cT=setTimeout(()=>{tmrHeld=true;nextTimer()},1000)});['pointerup','pointerleave','pointercancel'].forEach(ev=>tb.addEventListener(ev,()=>clearTimeout(cT)))}
+setTheme(saved);setControl(ctlMode);startTimer();try{if(localStorage.getItem('bbLock')){gameOver=true;$('bye').classList.add('show')}}catch(_){}updVoiceChip();setWorld('moon');reset();spawnTokens();started=true;
 const camPos=new THREE.Vector3(0,1.6,-4),tmp=new THREE.Vector3();let fr=0,last=performance.now();
 
 function frame(now){requestAnimationFrame(frame);
   const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=Math.max(last,now);t+=dt;
+  if(!gameOver&&TIMES[tmrIdx]&&playLeft>0){playLeft-=Math.min(dt,.25);const sec=Math.ceil(playLeft);if(sec!==lastSec){lastSec=sec;updTimer()}
+    if(!warned&&playLeft<=60&&TIMES[tmrIdx]>1){warned=true;speak('One more minute of play time!')}
+    if(playLeft<=0){playLeft=0;endGame()}}
+  if(gameOver){for(const k in keys)keys[k]=0;held.jet=held.dive=false;jetTap=false}
   let mx=dz(SL.x)+((keys.KeyD?1:0)-(keys.KeyA?1:0)),my=dz(SL.y)+((keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0));
   let turn=dz(SR.x)+((keys.KeyE||keys.ArrowRight?1:0)-(keys.KeyQ||keys.ArrowLeft?1:0));
   mx=Math.max(-1,Math.min(1,mx));my=Math.max(-1,Math.min(1,my));turn=Math.max(-1,Math.min(1,turn));
