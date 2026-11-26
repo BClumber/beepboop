@@ -385,6 +385,7 @@ for(let i=0;i<120;i++){const r=.12+Math.random()**2.2*.9,m=new THREE.Mesh(new TH
   for(let i=0;i<9;i++){const s=.4+Math.random()*.5,c=new THREE.Mesh(B(s,s,s),mCrate),x=(Math.random()-.5)*30,z=-4+Math.random()*34,y0=3+Math.random()*9,sp=Math.random()*.6+.2,ph=Math.random()*6;
     c.position.set(x,y0,z);DECOR.zero.add(shad(c));ANIM.push((dt,t)=>{c.rotation.x+=dt*sp;c.rotation.y+=dt*sp*.7;c.position.y=y0+Math.sin(t*sp+ph)*.6})}}
 
+let COASTER=null;
 /* funland: an absurd amusement park */
 {const F=DECOR.fun,FH=.8,tf=(x,z)=>terrainH(x,z,FH),FA=fn=>ANIM.push((dt,t)=>{if(W.id==='fun')fn(dt,t)});
   const PAL=[0xff4f8b,0xffd23f,0x3ec1ff,0x7bdc5a,0xb06bff,0xff8a3d],col=i=>std(PAL[i%PAL.length],{roughness:.38,metalness:.05}),mWh=std(0xffffff,{roughness:.4});
@@ -414,12 +415,13 @@ for(let i=0;i<120;i++){const r=.12+Math.random()**2.2*.9,m=new THREE.Mesh(new TH
     F.add(shad(grounded_(g,-14,-4)));COL.push({t:'box',x:-14,z:-4,w:8,d:8,h:tf(-14,-4)+.35,only:'fun'});
     FA((dt,t)=>{top.rotation.y+=dt*.5;riders.forEach(o=>o.r.position.y=1.4+Math.sin(t*2.2+o.ph)*.35)})}
   /* trampolines */
-  [[-3.5,-6],[9.5,-4],[-9,25],[3,33],[-11,9]].forEach(([x,z],i)=>{const g=new THREE.Group();
+  const mkTramp=(x,z,i)=>{const g=new THREE.Group();
     put(g,new THREE.TorusGeometry(.95,.09,10,36),col(i),0,.3,0).rotation.x=Math.PI/2;
     const mat=put(g,new THREE.CircleGeometry(.9,36),std(0x17171d,{roughness:.9}),0,.29,0);mat.rotation.x=-Math.PI/2;
     for(let k=0;k<4;k++){const a=k*Math.PI/2+.4;put(g,cyl(.04,.04,.3,6),mDark,Math.cos(a)*.9,.15,Math.sin(a)*.9)}
     F.add(shad(grounded_(g,x,z)));const tp={x,z,top:tf(x,z)+.3,mat,t:9};TRAMPS.push(tp);COL.push({t:'box',x,z,w:1.7,d:1.7,h:tf(x,z)+.3,only:'fun'});
-    FA(dt=>{tp.t+=dt;mat.position.y=.29-Math.max(0,.14-tp.t*.5)*Math.abs(Math.sin(tp.t*28))})});
+    FA(dt=>{tp.t+=dt;mat.position.y=.29-Math.max(0,.14-tp.t*.5)*Math.abs(Math.sin(tp.t*28))})};
+  [[-3.5,-6],[9.5,-4],[-9,25],[3,33],[-11,9]].forEach(([x,z],i)=>mkTramp(x,z,i));
   /* roller coaster with a loop */
   {const P=[[14,3,-8],[24,5,-12],[34,9,-8],[38,6,2],[34,2.5,11],[33,8,16.5],[33.5,11.5,13],[34,8,9.5],[34.6,3,12],[37,3.5,20],[34,10,30],[24,13,34],[16,8,30],[13,4,20],[12,6,6]].map(a=>new THREE.Vector3(a[0],a[1],a[2]));
     const curve=new THREE.CatmullRomCurve3(P,true,'centripetal'),N=520,tube=new THREE.TubeGeometry(curve,N,.15,8,true);
@@ -432,6 +434,8 @@ for(let i=0;i<120;i++){const r=.12+Math.random()**2.2*.9,m=new THREE.Mesh(new TH
     const upAt=i=>best<2?fr.normals[i].clone().multiplyScalar(best?-1:1):fr.binormals[i].clone().multiplyScalar(best===3?-1:1);
     const cars=[];for(let k=0;k<4;k++){const c=new THREE.Group();put(c,rbox(1.1,.55,1.6,.15),col(k),0,0,0);put(c,rbox(.95,.12,.5,.05),mDark,0,.32,-.3);F.add(shad(c));cars.push(c)}
     let u=0;const m4=new THREE.Matrix4(),xv=new THREE.Vector3();
+    COASTER={curve,fr,N,upAt,len:curve.getLength(),pts:Array.from({length:N},(_,i)=>curve.getPointAt(i/N))};
+    for(const [qx,qz] of [[19,-10],[13.5,22]]){let bi=0,bd=1e9;COASTER.pts.forEach((q,i)=>{const d=(q.x-qx)**2+(q.z-qz)**2;if(d<bd){bd=d;bi=i}});const q=COASTER.pts[bi];mkTramp(q.x,q.z,7+bi)}
     FA(dt=>{const pt=curve.getPointAt(u),i=Math.floor(u*N)%N,up=upAt(i),T=fr.tangents[i];const sp=.035+Math.max(0,12-pt.y)*.004;u=(u+dt*sp)%1;
       cars.forEach((c,k)=>{const uk=(u-k*.012+1)%1,ik2=Math.floor(uk*N)%N,pk=curve.getPointAt(uk),upk=upAt(ik2),Tk=fr.tangents[ik2];
         xv.crossVectors(upk,Tk).normalize();m4.makeBasis(xv,upk,Tk);c.quaternion.setFromRotationMatrix(m4);c.position.copy(pk).addScaledVector(upk,.42)})})}
@@ -457,7 +461,7 @@ for(let i=0;i<120;i++){const r=.12+Math.random()**2.2*.9,m=new THREE.Mesh(new TH
   /* giant rubber duck */
   {const g=new THREE.Group(),y=std(0xffd23f,{roughness:.35});put(g,new THREE.SphereGeometry(3,32,20),y,0,2.3,0).scale.set(1,.75,1.3);put(g,new THREE.SphereGeometry(1.8,28,18),y,0,5.1,2.4);
     put(g,new THREE.ConeGeometry(.6,1.6,20),std(0xff8a3d,{roughness:.4}),0,4.8,4.4).rotation.x=Math.PI/2;for(const ex of [-.75,.75])put(g,new THREE.SphereGeometry(.28,12,10),mDark,ex,5.6,3.85);
-    put(g,new THREE.SphereGeometry(1,16,12),y,0,3.6,-3.6).scale.set(.7,.9,1.2);g.rotation.y=-Math.PI/2;F.add(shad(grounded_(g,22,-14)));COL.push({t:'box',x:22,z:-14,w:7,d:6,h:tf(22,-14)+4.5,only:'fun'})}
+    put(g,new THREE.SphereGeometry(1,16,12),y,0,3.6,-3.6).scale.set(.7,.9,1.2);g.rotation.y=Math.PI/2;F.add(shad(grounded_(g,-24,-15)));COL.push({t:'box',x:-24,z:-15,w:8,d:6,h:tf(-24,-15)+4.5,only:'fun'})}
   /* upside-down floating house */
   {const g=new THREE.Group();put(g,B(6,4,5),col(2),0,0,0);const rf=put(g,new THREE.ConeGeometry(4.6,3,4),col(0),0,-3.5,0);rf.rotation.set(Math.PI,Math.PI/4,0);
     for(const x of [-1.6,1.6])put(g,B(1.2,1.1,.1),std(0x22313f,{roughness:.05,metalness:.8}),x,.2,2.55);put(g,B(1.1,2,.1),col(4),0,.9,2.55);put(g,B(.8,2,.8),std(0x8b4a3a),1.8,3,-1);
@@ -549,6 +553,12 @@ let actx=null;addEventListener('pointerdown',()=>{try{if(!actx)actx=new(window.A
 function tone(f0,f1,dur,type='sine',vol=.25,delay=0){if(!actx)return;try{const o=actx.createOscillator(),g=actx.createGain(),t0=actx.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f0,t0);
   o.frequency.exponentialRampToValueAtTime(f1,t0+dur);g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.001,t0+dur);o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+dur+.02)}catch(_){}}
 const boing=()=>{tone(150,560,.38,'sine',.3);tone(80,320,.38,'triangle',.14)};
+let gSrc=null,gGain=null,gFilt=null;
+function startGrindSound(){if(!actx)return;try{if(!gSrc){const len=actx.sampleRate,buf=actx.createBuffer(1,len,actx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  gSrc=actx.createBufferSource();gSrc.buffer=buf;gSrc.loop=true;gFilt=actx.createBiquadFilter();gFilt.type='bandpass';gFilt.Q.value=1.2;gGain=actx.createGain();gGain.gain.value=0;
+  gSrc.connect(gFilt);gFilt.connect(gGain);gGain.connect(actx.destination);gSrc.start()}}catch(_){}}
+function setGrindSound(v){if(!gGain)return;try{const t0=actx.currentTime;gGain.gain.setTargetAtTime(Math.min(.22,.04+v*.012),t0,.05);gFilt.frequency.setTargetAtTime(900+v*120,t0,.05)}catch(_){}}
+function stopGrindSound(){if(!gGain)return;try{gGain.gain.setTargetAtTime(0,actx.currentTime,.06)}catch(_){}}
 const ding=()=>{tone(880,1320,.16,'sine',.18);tone(1320,1760,.25,'sine',.16,.12)};
 let unlocked=false;addEventListener('pointerdown',()=>{if(unlocked)return;unlocked=true;try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}}catch(_){}},{capture:true});
 let cardT=0;
@@ -561,6 +571,7 @@ const SPN=90,spPos=new Float32Array(SPN*3).fill(-999),spVel=new Float32Array(SPN
 const spGeo=new THREE.BufferGeometry();spGeo.setAttribute('position',new THREE.BufferAttribute(spPos,3));const sparks=new THREE.Points(spGeo,sparkMat);sparks.frustumCulled=false;scene.add(sparks);
 function puffSpark(p){for(let k=0;k<10;k++){const i=spI++%SPN,a=Math.random()*6.283,b=Math.random()*3.14;spPos.set([p.x,p.y,p.z],i*3);
   spVel.set([Math.cos(a)*Math.sin(b)*2,Math.cos(b)*2+1,Math.sin(a)*Math.sin(b)*2],i*3);spLife[i]=.9}}
+function grindSpark(p,d){for(let k=0;k<2;k++){const i=spI++%SPN;spPos.set([p.x,p.y+.12,p.z],i*3);spVel.set([-d.x*3+(Math.random()-.5)*2,1+Math.random()*2,-d.z*3+(Math.random()-.5)*2],i*3);spLife[i]=.35+Math.random()*.25}}
 function stepSparks(dt){for(let i=0;i<SPN;i++){if(spLife[i]<=0)continue;spLife[i]-=dt;for(let k=0;k<3;k++)spPos[i*3+k]+=spVel[i*3+k]*dt;spVel[i*3+1]-=2*dt;if(spLife[i]<=0)spPos[i*3+1]=-999}spGeo.attributes.position.needsUpdate=true}
 
 /* ---------- worlds ---------- */
@@ -574,13 +585,13 @@ const WORLDS=[
  {id:'zero',n:'Zero-G',g:0,air:0,dust:0,top:0x000000,hor:0x03050b,fog:[120,215],ground:0x9aa1ab,rock:0x777777,dustC:0xffffff,tex:'deck',hills:0,stars:1,sun:[0xffffff,3.3],hemi:[0x9fb0d0,0x303540,.3],hab:0xdfe5ee,planet:[180,-260,150,470],
   note:'Space station deck. Mag boots hold you down. Jump and you drift, so use DIVE to get back.',fact:'In space there is no gravity. Everything floats!'},
  {id:'fun',n:'Funland',g:6,air:.6,dust:.5,top:0x6b4cff,hor:0xffb8dc,fog:[50,240],ground:0xffffff,rock:0xff6fae,dustC:0xffd6ec,tex:'candy',hills:.8,stars:0,sun:[0xfff3e6,2.7],hemi:[0xffd6f0,0x7ad1c4,.85],hab:0xffffff,planet:null,
-  note:'Funland! Bounce on the trampolines, then watch the coaster, wheel and carousel.',fact:'Welcome to Funland, the silliest place ever! Bounce on the trampolines!'}];
+  note:'Funland! Bounce up onto the roller coaster track to grind the rail. The trampolines under the track help.',fact:'Welcome to Funland, the silliest place ever! Bounce on the trampolines and grind the roller coaster rail!'}];
 let W=WORLDS[0];
 $('chips').innerHTML=WORLDS.map(w=>`<button class="chip" data-w="${w.id}">${w.n}</button>`).join('')+
   '<button class="chip" id="ctl">Controls: <span id="ctlName">Easy</span></button><button class="chip learn" id="learn">Learn: <span id="topicName">Colors</span></button><button class="chip" id="voice" aria-pressed="true">Voice: <span id="voiceName">Auto</span></button>'+
   '<button class="chip" id="theme"><span class="dot"></span><span id="themeName">Blue</span></button><button class="chip" id="reset">Reset</button>';
 let started=false;
-function setWorld(id){W=WORLDS.find(w=>w.id===id)||WORLDS[0];HILL=W.hills;rebuildTerrain();
+function setWorld(id){if(started&&grind){grind=null;stopGrindSound();robot.rotation.set(0,yaw,0)}W=WORLDS.find(w=>w.id===id)||WORLDS[0];HILL=W.hills;rebuildTerrain();
   ON_GROUND.forEach(e=>e.o.position.y=terrainH(e.x,e.z)+e.off);
   skyMat.uniforms.top.value.copy(lin(W.top));skyMat.uniforms.hor.value.copy(lin(W.hor));scene.fog=new THREE.Fog(lin(W.hor),W.fog[0],W.fog[1]);
   if(!TEXN)TEXN={reg:normalFrom(regolith.image,4,26),grass:normalFrom(grass.image,2.5,45),deck:normalFrom(deck.image,2,100),candy:normalFrom(candyTex.image,1.2,60)};gMat.map=TEX[W.tex];gMat.normalMap=TEXN[W.tex];gMat.color.copy(lin(W.ground));gMat.needsUpdate=true;mRock.color.copy(lin(W.rock));dMat.color.copy(lin(W.dustC));
@@ -646,8 +657,9 @@ const toward=(a,b,d)=>a<b?Math.min(b,a+d):Math.max(b,a-d);
 
 /* ---------- state ---------- */
 const vel=new THREE.Vector3();
-let yaw=0,grounded=true,gait=0,amp=0,squash=0,t=0,fuel=100,onPad=null,lastG=0,vF=0,vL=0,wY=0,aF=0,jumpT=-1,crouch=0,climb=null,climbHold=0,pvFc=0,wasBlocked=false,camD=3;
-function reset(){robot.position.set(0,.55,-1);vel.set(0,0,0);yaw=0;grounded=true;squash=0;fuel=100;lastG=0;vF=vL=wY=0;jumpT=-1;crouch=0;camAng=Math.PI;climb=null;climbHold=0;
+let yaw=0,grounded=true,gait=0,amp=0,squash=0,t=0,fuel=100,onPad=null,lastG=0,vF=0,vL=0,wY=0,aF=0,jumpT=-1,crouch=0,climb=null,climbHold=0,pvFc=0,wasBlocked=false,camD=3,grind=null,grindCD=0,gUp=null,gDir=null;
+const xv2=new THREE.Vector3(),mG=new THREE.Matrix4();
+function reset(){robot.position.set(0,.55,-1);vel.set(0,0,0);yaw=0;grounded=true;squash=0;fuel=100;lastG=0;vF=vL=wY=0;jumpT=-1;crouch=0;camAng=Math.PI;climb=null;climbHold=0;grind=null;grindCD=0;stopGrindSound();robot.rotation.set(0,0,0);
   const g=surfaceAt(0,-1,.2);robot.position.y=g+.55;lastG=g}
 let saved='blue';try{saved=localStorage.getItem('quadTheme')||'blue'}catch(_){}
 setTheme(saved);setControl(easy);updVoiceChip();setWorld('moon');reset();spawnTokens();started=true;
@@ -664,7 +676,27 @@ function frame(now){requestAnimationFrame(frame);
   const pvF=vF;
   let eMag=0,eHead=yaw,eX=0,eZ=0;
   if(easy){eMag=Math.min(1,Math.hypot(mx,my));if(eMag>0){const cfx=-Math.sin(camAng),cfz=-Math.cos(camAng);eX=cfx*my-cfz*mx;eZ=cfz*my+cfx*mx;const el=Math.hypot(eX,eZ)||1;eX/=el;eZ/=el;eHead=Math.atan2(eX,eZ)}}
-  if(climb){
+  grindCD=Math.max(0,grindCD-dt);
+  if(!grind&&W.id==='fun'&&COASTER&&!climb&&grindCD<=0&&(!grounded||pos.y>3)){
+    let bi=-1,bd=1e9;const PP=COASTER.pts;for(let i=0;i<PP.length;i++){const q=PP[i],dd=(q.x-pos.x)**2+(q.y-(pos.y-.45))**2+(q.z-pos.z)**2;if(dd<bd){bd=dd;bi=i}}
+    if(bd<.72&&COASTER.upAt(bi).y>.3&&vel.y<2){const T=COASTER.fr.tangents[bi];let sp0=vel.x*T.x+vel.y*T.y+vel.z*T.z;if(Math.abs(sp0)<3)sp0=(sp0<0?-1:1)*3;
+      grind={u:bi/COASTER.N,sp:sp0};grounded=false;jumpT=-1;tone(320,180,.12,'square',.12);startGrindSound()}}
+  if(grind){
+    const C=COASTER,g=grind,i0=Math.floor(g.u*C.N)%C.N,T=C.fr.tangents[i0],dir=g.sp>=0?1:-1;
+    let acc=-W.g*T.y-g.sp*.03;
+    if(easy){if(eMag>0)acc+=dir*(eX*T.x+eZ*T.z)*dir*3*eMag}else acc+=dir*my*3;
+    g.sp=Math.max(-24,Math.min(24,g.sp+acc*dt));
+    g.u=((g.u+g.sp*dt/C.len)%1+1)%1;
+    const i1=Math.floor(g.u*C.N)%C.N,p1=C.curve.getPointAt(g.u),up1=C.upAt(i1),d1=C.fr.tangents[i1].clone().multiplyScalar(g.sp>=0?1:-1);
+    pos.copy(p1).addScaledVector(up1,.62);vel.copy(d1).multiplyScalar(Math.abs(g.sp));
+    if(Math.hypot(d1.x,d1.z)>.2)yaw=Math.atan2(d1.x,d1.z);
+    gUp=up1;gDir=d1;vF=Math.abs(g.sp);vL=0;wY=0;onPad=null;crouch=0;
+    if(Math.random()<Math.min(1,Math.abs(g.sp)/6))grindSpark(p1,d1);
+    setGrindSound(Math.abs(g.sp));
+    const fall=up1.y<-.1&&Math.abs(g.sp)<5;
+    if(jetTap||held.dive||fall){const out=vel.clone();if(jetTap){out.y+=5.5;out.addScaledVector(up1,1.5);boing()}
+      grind=null;grindCD=.6;vel.copy(out);grounded=false;stopGrindSound();robot.rotation.set(0,yaw,0)}
+  }else if(climb){
     const c=climb;c.t=Math.min(1,c.t+dt/c.dur);const k=c.t;
     const yk=c.up?sm(Math.min(1,k/.7)):sm(Math.max(0,(k-.3)/.7)),hk=c.up?sm(Math.max(0,(k-.15)/.85)):sm(Math.min(1,k/.75));
     pos.x=c.x0+(c.x1-c.x0)*hk;pos.z=c.z0+(c.z1-c.z0)*hk;pos.y=c.y0+(c.y1-c.y0)*yk;
@@ -704,6 +736,8 @@ function frame(now){requestAnimationFrame(frame);
     vF=vel.x*fx+vel.z*fz;vL=vel.x*lx+vel.z*lz;
   }
   jetTap=false;
+  let g2=surfaceAt(pos.x,pos.z,.2);
+  if(!grind){
   const footY=grounded?pos.y-h:pos.y-.5,step=grounded?.38:.05;
   const nx=pos.x+vel.x*dt,nz=pos.z+vel.z*dt;
   let blocked=false;
@@ -721,13 +755,14 @@ function frame(now){requestAnimationFrame(frame);
   if(grounded){vF=vel.x*fx+vel.z*fz;vL=vel.x*lx+vel.z*lz}
   aF+=(((vF-pvFc)/Math.max(dt,1e-3))-aF)*Math.min(1,8*dt);pvFc=vF;wasBlocked=blocked&&Math.hypot(vel.x,vel.z)<.05;
   pos.y+=grounded?0:vel.y*dt;
-  const g2=surfaceAt(pos.x,pos.z,.2);
+  g2=surfaceAt(pos.x,pos.z,.2);
   if(!grounded&&pos.y<=g2+h&&vel.y<=0){const imp=-vel.y;grounded=true;squash=Math.min(.16,imp*.04);pos.y=g2+h;vel.y=0;lastG=g2;
     vF=vel.x*fx+vel.z*fz;vL=vel.x*lx+vel.z*lz;puff(pos.x,g2,pos.z,Math.min(40,8+imp*8),Math.min(2.5,.5+imp*.3))}
   if(grounded&&!climb&&pos.y<g2+h-.05)pos.y=g2+h;
   pos.x=Math.max(-150,Math.min(150,pos.x));pos.z=Math.max(-150,Math.min(150,pos.z));
   if(pos.y>400){pos.y=400;vel.y=Math.min(vel.y,0)}
-  robot.rotation.y=yaw;squash*=Math.exp(-6*dt);
+  }
+  if(grind&&gUp){xv2.crossVectors(gUp,gDir).normalize();mG.makeBasis(xv2,gUp,gDir);robot.quaternion.setFromRotationMatrix(mG)}else robot.rotation.set(0,yaw,0);squash*=Math.exp(-6*dt);
 
   /* body pose */
   const sF=surfaceAt(pos.x+fx*.34,pos.z+fz*.34),sB=surfaceAt(pos.x-fx*.34,pos.z-fz*.34);
@@ -738,7 +773,7 @@ function frame(now){requestAnimationFrame(frame);
   body.position.y=-squash-crouch*.14+amp*.01*Math.sin(gait*2);
   const pT=grounded?(sitting?-.3:0)-Math.max(-.5,Math.min(.5,slope))+Math.max(-.12,Math.min(.12,aF*.03))+crouch*.05:Math.max(-.25,Math.min(.25,-vel.y*.02));
   const ck=climb?climb.t:0,pC=climb?(climb.up?-Math.min(.7,Math.atan2(climb.rise,.9))*Math.sin(Math.PI*ck):Math.min(.6,Math.atan2(-climb.rise,.9))*Math.sin(Math.PI*ck)):0;
-  body.rotation.x+=((climb?pC:pT)-body.rotation.x)*Math.min(1,(climb?14:10)*dt);
+  body.rotation.x+=((climb?pC:grind?0:pT)-body.rotation.x)*Math.min(1,(climb?14:10)*dt);
   const rT=grounded?Math.max(-.12,Math.min(.12,-vF*wY*.05))+vL*.03:(W.g===0?Math.sin(t*.9)*.08:0);
   body.rotation.z+=(rT-body.rotation.z)*Math.min(1,6*dt);
   const p=body.rotation.x,cp=Math.cos(p),spn=Math.sin(p);
@@ -759,7 +794,7 @@ function frame(now){requestAnimationFrame(frame);
       ik(l,-wy*spn+sz*cp,wy*cp+sz*spn,sx);
       if(l.pc>0&&c<=0&&amp>.6)puff(gx,gy,gz,2+spd*1.5,.25+spd*.12);
       l.pc=c;
-    }else{l.fy=undefined;const pd=W.g===0?Math.sin(t*2.2+l.off)*.07:0;ik(l,.04*l.sz+pd,-.5+(vel.y>0?.06:0),0)}});
+    }else{l.fy=undefined;if(grind){ik(l,-l.sz*.05,-.5,-l.sx*.2);return}const pd=W.g===0?Math.sin(t*2.2+l.off)*.07:0;ik(l,.04*l.sz+pd,-.5+(vel.y>0?.06:0),0)}});
 
   /* tokens */
   tokens.forEach(tk=>{if(tk.got)return;tk.spr.position.y=tk.base+Math.sin(t*2+tk.ph)*.12;
@@ -772,7 +807,7 @@ function frame(now){requestAnimationFrame(frame);
   /* camera */
   const cbase=[Math.PI,Math.PI/2,Math.PI*.85][camMode];
   if(t-lastLook>2.5&&pts.size===0)orbY*=Math.exp(-1.4*dt);
-  if(easy&&t-lastLook>1.2&&pts.size===0&&spd>.15)camAng+=wrapA(yaw+cbase-camAng)*Math.min(1,.8*dt);
+  if(easy&&t-lastLook>1.2&&pts.size===0&&spd>.15)camAng+=wrapA(yaw+cbase-camAng)*Math.min(1,(grind?2.5:.8)*dt);
   const alt=Math.max(0,pos.y-h-g2);
   const dist=([3,3.3,8][camMode]+Math.min(6,alt*.15))*zoom*(portrait?1.25:1);
   const ang=easy?camAng:yaw+cbase+orbY;camAng=ang;
@@ -791,7 +826,7 @@ function frame(now){requestAnimationFrame(frame);
     $('fuel').style.width=fuel.toFixed(0)+'%';
     $('fuelBar').className='fuel'+(onPad&&fuel<100?' fill':fuel<20?' low':'');
     $('bJet').classList.toggle('empty',fuel<1&&!grounded);
-    $('status').textContent=climb?(climb.up?'Climbing up…':'Stepping down…'):onPad&&fuel<100?'Refueling…':fuel<1&&!grounded?'Out of fuel. Thrusters offline.':W.note}
+    $('status').textContent=grind?'Grinding! Push the stick to go faster, tap JUMP to launch off.':climb?(climb.up?'Climbing up…':'Stepping down…'):onPad&&fuel<100?'Refueling…':fuel<1&&!grounded?'Out of fuel. Thrusters offline.':W.note}
   renderer.render(scene,cam)}
 requestAnimationFrame(frame);
 }
