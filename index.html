@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BeepBoop">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="icons/favicon-64.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<link href="fonts/fonts.css" rel="stylesheet">
 <style>
 /* VOICE: rover teleop console that doubles as a toddler's picture book
    IDEA: a live camera feed from a robot exploring four worlds, with learning tokens to find
@@ -1263,5 +1263,5 @@ function frame(now){requestAnimationFrame(frame);
 requestAnimationFrame(frame);
 }
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(()=>caches.keys()).then(ks=>Promise.all(ks.map(k=>caches.open(k).then(c=>c.match('three.min.js'))))).then(h=>{if(!h.some(Boolean))return;let seen=null;try{seen=localStorage.getItem('bbOffline')}catch(_){}if(seen)return;try{localStorage.setItem('bbOffline','1')}catch(_){}const d=document.createElement('div');d.textContent='✓ Saved — BeepBoop now plays offline';d.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:70;background:#1f8a4c;color:#fff;font:600 14px system-ui,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.35);transition:opacity .6s';document.body.appendChild(d);setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),700)},4000)}).catch(()=>{})});</script>
 </body></html>
